@@ -1,7 +1,8 @@
+import os
+
 from dotenv import load_dotenv
 from passlib.hash import bcrypt
 from sqlalchemy import select
-import os
 
 from db import LocalSession, User
 

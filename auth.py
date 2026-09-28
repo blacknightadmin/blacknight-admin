@@ -7,9 +7,13 @@ from starlette.responses import RedirectResponse
 
 from db import LocalSession, User
 
+
 def get_user_by_username(username):
     with LocalSession() as session:
-        return session.execute(select(User).filter_by(username=username)).scalar_one_or_none()
+        return session.execute(
+            select(User).filter_by(username=username)
+        ).scalar_one_or_none()
+
 
 class AdminAuth(AuthenticationBackend):
     async def login(self, request: Request) -> bool | RedirectResponse:
@@ -22,8 +26,8 @@ class AdminAuth(AuthenticationBackend):
             return True
         return False
 
-    async def authenticate(self, request: Request) -> bool :
+    async def authenticate(self, request: Request) -> bool:
         return request.session.get("user_id") is not None
 
-    async def logout(self, request: Request)-> bool | RedirectResponse:
+    async def logout(self, request: Request) -> bool | RedirectResponse:
         request.session.clear()
