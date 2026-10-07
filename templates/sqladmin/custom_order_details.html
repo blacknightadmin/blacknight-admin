@@ -1,0 +1,44 @@
+{% extends "sqladmin/details.html" %}
+
+{% block content %}
+{{ super() }}
+
+<div class="col-12">
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title">{{ _("Order Items") }}</h3>
+    </div>
+    <div class="card-body">
+      <table class="table card-table table-vcenter">
+        <thead>
+          <tr>
+            <th>{{ _("Product") }}</th>
+            <th>{{ _("Quantity") }}</th>
+            <th>{{ _("Returned") }}</th>
+            <th>{{ _("Price") }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order_items %}
+          <tr>
+            <td>{{ item.product }}</td>
+            <td>{{ item.count }}</td>
+            <td>{{ item.quantity_returned }}</td>
+            <td>{{ item.price }}</td>
+            <td>
+              <a href="{{ url_for('admin:edit', identity='order-item', pk=item.id) }}">{{ _("Edit") }}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+        <a href="{{ url_for('admin:create', identity='order-item') }}?order_id={{ get_object_identifier(model) }}"
+        class="btn btn-primary mt-3">
+        {{ _("Add item") }}
+        </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
