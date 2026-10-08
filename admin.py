@@ -16,6 +16,7 @@ from queries import (
     return_order_item,
 )
 from order_state_machine import ORDER_STATE_MACHINE, do_check, do_action
+from report.orders import report as order_report
 
 
 class UserAdmin(ModelView, model=User):
@@ -224,3 +225,17 @@ class ReturnOrderItemAdin(BaseView):
         return_order_item(pk, form.data["quantity_returned"])
 
         return RedirectResponse("/admin/return-item/", status.HTTP_302_FOUND)
+
+class OrderReport(BaseView):
+    name = "Order Report"
+    category = "reports"
+    category_icon = "fa fa-line-chart"
+
+    @expose("/reports/order/", methods=["GET"])
+    async def reports(self, request):
+        return await self.templates.TemplateResponse(
+            request, 
+            "sqladmin/order_report.html",
+            context=order_report.get_report_context(request)
+        )
+    

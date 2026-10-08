@@ -2,11 +2,13 @@ import os
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from sqladmin import Admin
 
 from admin import (
     OrderAdmin,
     OrderItemAdmin,
+    OrderReport,
     ProductAdmin,
     SupplierAdmin,
     UserAdmin,
@@ -35,6 +37,11 @@ auth_backend = AdminAuth(os.environ["SECRET_KEY"])
 admin = CustomAdmin(
     app, engine, authentication_backend=auth_backend, session_maker=LocalSession
 )
+admin.admin.mount(
+    "/custom-statics",
+    StaticFiles(directory="templates/sqladmin/static"),
+    name="custom-statics",
+)
 
 admin.add_view(UserAdmin)
 admin.add_view(SupplierAdmin)
@@ -42,3 +49,4 @@ admin.add_view(ProductAdmin)
 admin.add_view(OrderAdmin)
 admin.add_view(OrderItemAdmin)
 admin.add_view(ReturnOrderItemAdin)
+admin.add_view(OrderReport)

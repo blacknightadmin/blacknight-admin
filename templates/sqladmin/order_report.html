@@ -1,0 +1,115 @@
+{% extends "sqladmin_original/layout.html" %}
+
+{% block head_css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('admin:custom-statics', path='css/graph.css') }}">
+{% endblock %}
+
+{% block tail_js %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const revenueLabels = [{% for label, value in revenue_data %}"{{ label }}"{% if not loop.last %},{% endif %}{% endfor %}];
+  const revenueValues = [{% for label, value in revenue_data %}{{ value }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+  const ordersLabels = [{% for label, value in orders_count_data %}"{{ label }}"{% if not loop.last %},{% endif %}{% endfor %}];
+  const ordersValues = [{% for label, value in orders_count_data %}{{ value }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+  const GRID_COLOR = 'rgba(0,0,0,0.06)';
+  const LABEL_COLOR = '#8888a0';
+
+  const baseOpts = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: '#1e1e2a', titleColor: '#e8e8f0', bodyColor: '#9999b0', borderColor: '#2d2d3d', borderWidth: 1 }
+    },
+    scales: {
+      x: { grid: { color: GRID_COLOR }, ticks: { color: LABEL_COLOR, font: { family: 'DM Mono', size: 10 } } },
+      y: { grid: { color: GRID_COLOR }, ticks: { color: LABEL_COLOR, font: { family: 'DM Mono', size: 10 } } }
+    }
+  };
+
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: revenueLabels,
+      datasets: [{ label: 'Revenue', data: revenueValues, backgroundColor: '#7c6af7', borderRadius: 4, borderSkipped: false }]
+    },
+    options: baseOpts
+  });
+
+  new Chart(document.getElementById('ordersChart'), {
+    type: 'bar',
+    data: {
+      labels: ordersLabels,
+      datasets: [{ label: 'Orders', data: ordersValues, backgroundColor: '#4dd9ac', borderRadius: 4, borderSkipped: false }]
+    },
+    options: baseOpts
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="stats-page">
+
+  <header>
+    <h1>BlacKnight Statistics</h1>
+  </header>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="label">Pending</div>
+      <div class="value">{{ Pending }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Shipped</div>
+      <div class="value">{{ Shipped }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Delivered</div>
+      <div class="value">{{ Delivered }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Cancelled</div>
+      <div class="value">{{ Cancelled }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Unpaid</div>
+      <div class="value">{{ Unpaid }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Paid</div>
+      <div class="value">{{ Paid }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Return Rate</div>
+      <div class="value">{{ "%.2f"|format(return_rate) }}%</div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end mb-3">
+    <div class="btn-group">
+      {% for option in report_options %}
+      <a href="?report-option={{ option }}"
+        class="btn {% if option == report_option %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        {{ option | capitalize }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card full">
+      <div class="card-title">Revenue Over Time</div>
+      <canvas id="revenueChart"></canvas>
+    </div>
+    <div class="card full">
+      <div class="card-title">Orders Over Time</div>
+      <canvas id="ordersChart"></canvas>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
