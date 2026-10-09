@@ -1,12 +1,17 @@
 from sqlalchemy import func, select, update
 from sqladmin import BaseView, ModelView, expose
-from sqladmin.filters import ForeignKeyFilter
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import RedirectResponse
 
 from db import Order, OrderItem, Product, Supplier, User, LocalSession
-from filters import FilterOrderItemsByOrder, PaymentStatusFilter, OrderStatusFilter
+from filters import (
+    FilterOrderItemsByOrder,
+    FilterProductBySupplier,
+    FilterSupplierByPlatform,
+    PaymentStatusFilter,
+    OrderStatusFilter,
+)
 from forms import CustomOrderItemForm, ReturnOrderItemForm
 from queries import (
     get_orderitem_by_id,
@@ -40,11 +45,17 @@ class SupplierAdmin(ModelView, model=Supplier):
     category = "inventory"
     category_icon = "fa-regular fa-rectangle-list"
 
+    column_filters = [FilterSupplierByPlatform()]
+    column_searchable_list = [Supplier.name]
+
 
 class ProductAdmin(ModelView, model=Product):
     column_list = [Product.name, Product.price, Product.stock_count, Product.supplier]
     category = "inventory"
     category_icon = "fa-regular fa-rectangle-list"
+
+    column_filters = [FilterProductBySupplier()]
+    column_searchable_list = [Product.name]
 
 
 class OrderAdmin(ModelView, model=Order):
@@ -236,6 +247,7 @@ class ReturnOrderItemAdin(BaseView):
 
         return RedirectResponse("/admin/return-item/", status.HTTP_302_FOUND)
 
+
 class OrderReport(BaseView):
     name = "Order Report"
     category = "reports"
@@ -244,8 +256,7 @@ class OrderReport(BaseView):
     @expose("/reports/order/", methods=["GET"])
     async def reports(self, request):
         return await self.templates.TemplateResponse(
-            request, 
+            request,
             "sqladmin/order_report.html",
-            context=order_report.get_report_context(request)
+            context=order_report.get_report_context(request),
         )
-    

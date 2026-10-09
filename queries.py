@@ -1,7 +1,13 @@
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import cast, select, String
 
-from db import LocalSession, Order, OrderItem, OrderStatus, Product
+from db import LocalSession, Order, OrderItem, Product, Supplier
+
+
+def get_supplier_choices():
+    with LocalSession() as session:
+        stmt = select(Supplier.id, Supplier.name).order_by(Supplier.name)
+        return [tuple(row) for row in session.execute(stmt).all()]
 
 
 def get_product_choices():
@@ -37,7 +43,9 @@ def get_returnable_items():
 
 def get_order_choices():
     with LocalSession() as session:
-        stmt = select(Order.id, "Order #" + cast(Order.id, String)).order_by(Order.created_at.desc())
+        stmt = select(Order.id, "Order #" + cast(Order.id, String)).order_by(
+            Order.created_at.desc()
+        )
         result = session.execute(stmt).all()
         return [tuple(row) for row in result]
 
