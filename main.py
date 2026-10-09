@@ -35,7 +35,11 @@ class CustomAdmin(Admin):
 app = FastAPI()
 auth_backend = AdminAuth(os.environ["SECRET_KEY"])
 admin = CustomAdmin(
-    app, engine, authentication_backend=auth_backend, session_maker=LocalSession
+    app,
+    engine,
+    authentication_backend=auth_backend,
+    session_maker=LocalSession,
+    title="Blacknight Admin",
 )
 admin.admin.mount(
     "/custom-statics",

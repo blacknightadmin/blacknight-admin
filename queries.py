@@ -37,7 +37,7 @@ def get_returnable_items():
 
 def get_order_choices():
     with LocalSession() as session:
-        stmt = select(Order.id, "Order #" + cast(Order.id, String))
+        stmt = select(Order.id, "Order #" + cast(Order.id, String)).order_by(Order.created_at.desc())
         result = session.execute(stmt).all()
         return [tuple(row) for row in result]
 

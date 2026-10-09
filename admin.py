@@ -1,10 +1,12 @@
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqladmin import BaseView, ModelView, expose
+from sqladmin.filters import ForeignKeyFilter
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import RedirectResponse
 
 from db import Order, OrderItem, Product, Supplier, User, LocalSession
+from filters import FilterOrderItemsByOrder, PaymentStatusFilter, OrderStatusFilter
 from forms import CustomOrderItemForm, ReturnOrderItemForm
 from queries import (
     get_orderitem_by_id,
@@ -55,12 +57,14 @@ class OrderAdmin(ModelView, model=Order):
     column_formatters = {Order.id: lambda m, a: f"Order #{m.id}"}
     form_excluded_columns = [Order.order_items, Order.created_at, Order.delivered_at]
 
+    column_filters = [PaymentStatusFilter(), OrderStatusFilter()]
+
     category = "orders"
     category_icon = "fa-solid fa-cart-shopping"
 
     def list_query(self, request):
         base_stmt = super().list_query(request)
-        return base_stmt.order_by(Order.id.desc())
+        return base_stmt.order_by(Order.created_at.desc())
 
     async def details_context(self, request):
         pk = request.path_params["pk"]
@@ -134,13 +138,16 @@ class OrderItemAdmin(ModelView, model=OrderItem):
         OrderItem.order,
     ]
 
+    column_filters = [FilterOrderItemsByOrder()]
+    column_searchable_list = [OrderItem.product]
+
     category = "orders"
     category_icon = "fa-solid fa-cart-shopping"
 
     def list_query(self, request):
         base_stmt = super().list_query(request)
         return base_stmt.join(OrderItem.order).order_by(
-            OrderItem.order_id.desc(), OrderItem.id
+            Order.created_at.desc(), OrderItem.count.desc()
         )
 
     async def scaffold_form(self, rules=None):
@@ -164,6 +171,9 @@ class OrderItemAdmin(ModelView, model=OrderItem):
     async def on_model_delete(self, model, request):
         if model.order.status.name != "Pending":
             raise Exception("Only items in pending orders can be deleted!")
+
+    def search_query(self, stmt, term):
+        return stmt.join(OrderItem.product).filter(Product.name.like(f"%{term}%"))
 
 
 class ReturnOrderItemAdin(BaseView):
