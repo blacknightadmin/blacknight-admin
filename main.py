@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqladmin import Admin
+from starlette.middleware.sessions import SessionMiddleware
 
 from admin import (
     OrderAdmin,
@@ -33,6 +34,12 @@ class CustomAdmin(Admin):
 
 
 app = FastAPI()
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ["SECRET_KEY"],
+    max_age=int(os.environ["SESSION_COOKIE_AGE"])
+)
+
 auth_backend = AdminAuth(os.environ["SECRET_KEY"])
 admin = CustomAdmin(
     app,
