@@ -4,7 +4,7 @@ from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import RedirectResponse
 
-from db import Order, OrderItem, Product, Supplier, User, LocalSession
+from db import Order, OrderItem, Product, Supplier, User
 from .filters import (
     FilterOrderItemsByOrder,
     FilterProductBySupplier,
@@ -24,6 +24,7 @@ from .queries import (
 )
 from .order_state_machine import ORDER_STATE_MACHINE, do_check, do_action
 from .report.orders import report as order_report
+import db
 
 
 class UserAdmin(ModelView, model=User):
@@ -111,7 +112,8 @@ class OrderAdmin(ModelView, model=Order):
         return {**context, "_form": await self.get_custom_edit_form(request)}
 
     async def update_model(self, request, pk, data):
-        with LocalSession() as session:
+        SessionLocal = db.get_session_factory()
+        with SessionLocal() as session:
             with session.begin():
                 model = session.execute(
                     select(Order).filter_by(id=pk)

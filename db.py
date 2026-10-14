@@ -24,7 +24,10 @@ from sqlalchemy.orm import (
 
 load_dotenv()
 engine = create_engine(os.environ["DATABASE_URL"], echo=True)
-LocalSession = sessionmaker(engine, expire_on_commit=False)
+
+
+def get_session_factory():
+    return sessionmaker(engine, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):

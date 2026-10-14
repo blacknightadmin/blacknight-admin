@@ -2,9 +2,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
-from db import LocalSession, OrderItem
+from db import OrderItem
 from .timebased_report_conf import REPORT_OPTIONS
 from . import orders_count_report, revenue_report, status_report
+import db
 
 
 def report_return_rate(session: Session):
@@ -17,7 +18,8 @@ def report_return_rate(session: Session):
 def get_report_context(request: Request):
     report_option = request.query_params.get("report-option", "daily")
 
-    with LocalSession() as session:
+    SessionLocal = db.get_session_factory()
+    with SessionLocal() as session:
         order_status_report = status_report.generate_report(session, "order_status")
         order_payment_report = status_report.generate_report(session, "payment_status")
 

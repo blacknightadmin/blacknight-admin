@@ -4,13 +4,14 @@ from sqlalchemy import select
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from db import LocalSession, User
+import db
 
 
 def get_user_by_username(username):
-    with LocalSession() as session:
+    SessionLocal = db.get_session_factory()
+    with SessionLocal() as session:
         return session.execute(
-            select(User).filter_by(username=username)
+            select(db.User).filter_by(username=username)
         ).scalar_one_or_none()
 
 

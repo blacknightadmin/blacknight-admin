@@ -16,7 +16,7 @@ from app.admin import (
     ReturnOrderItemAdin,
 )
 from app.auth import AdminAuth
-from db import engine, LocalSession
+import db
 
 load_dotenv()
 
@@ -43,9 +43,9 @@ app.add_middleware(
 auth_backend = AdminAuth(os.environ["SECRET_KEY"])
 admin = CustomAdmin(
     app,
-    engine,
+    db.engine,
     authentication_backend=auth_backend,
-    session_maker=LocalSession,
+    session_maker=db.get_session_factory(),
     title="Blacknight Admin",
     templates_dir="app/templates",
 )
