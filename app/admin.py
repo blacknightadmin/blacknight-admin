@@ -5,15 +5,15 @@ from starlette.exceptions import HTTPException
 from starlette.responses import RedirectResponse
 
 from db import Order, OrderItem, Product, Supplier, User, LocalSession
-from filters import (
+from .filters import (
     FilterOrderItemsByOrder,
     FilterProductBySupplier,
     FilterSupplierByPlatform,
     PaymentStatusFilter,
     OrderStatusFilter,
 )
-from forms import CustomOrderItemForm, ReturnOrderItemForm
-from queries import (
+from .forms import CustomOrderItemForm, ReturnOrderItemForm
+from .queries import (
     get_orderitem_by_id,
     get_orderitems_by_order_id,
     get_product_choices,
@@ -22,8 +22,8 @@ from queries import (
     get_returnable_items,
     return_order_item,
 )
-from order_state_machine import ORDER_STATE_MACHINE, do_check, do_action
-from report.orders import report as order_report
+from .order_state_machine import ORDER_STATE_MACHINE, do_check, do_action
+from .report.orders import report as order_report
 
 
 class UserAdmin(ModelView, model=User):

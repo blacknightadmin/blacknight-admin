@@ -4,7 +4,8 @@ from sqlalchemy import DateTime, func, select
 from sqlalchemy.orm import Session
 
 from db import Order, OrderItem, PaymentStatus
-from report.orders.timebased_report_conf import ReportConf, REPORT_OPTIONS
+from .timebased_report_conf import ReportConf, REPORT_OPTIONS
+
 
 def generate_report(session: Session, option: str):
     """
@@ -74,5 +75,4 @@ def generate_report(session: Session, option: str):
         .join(revenue, trunc_time_series.c[option] == revenue.c[option], isouter=True)
     )
 
-    
     return [(row[0], float(row[1])) for row in session.execute(stmt).all()]

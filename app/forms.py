@@ -1,6 +1,5 @@
 from wtforms import (
     Form,
-    FieldList,
     SelectField,
     IntegerField,
     DecimalField,
@@ -8,8 +7,7 @@ from wtforms import (
 )
 from wtforms.validators import InputRequired
 
-from db import Order, OrderItem
-from queries import get_product_count
+from .queries import get_product_count
 
 
 class CustomOrderItemForm(Form):

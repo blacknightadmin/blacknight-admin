@@ -1,5 +1,4 @@
 from passlib.hash import bcrypt
-from sqladmin import Admin
 from sqladmin.authentication import AuthenticationBackend
 from sqlalchemy import select
 from starlette.requests import Request

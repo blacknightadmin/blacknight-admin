@@ -4,7 +4,8 @@ from sqlalchemy import DateTime, func, select
 from sqlalchemy.orm import Session
 
 from db import Order
-from report.orders.timebased_report_conf import ReportConf, REPORT_OPTIONS
+from .timebased_report_conf import ReportConf, REPORT_OPTIONS
+
 
 def generate_report(session: Session, option: str):
     """
@@ -64,5 +65,4 @@ def generate_report(session: Session, option: str):
         )
     )
 
-    
     return [tuple(row) for row in session.execute(stmt).all()]

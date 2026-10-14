@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqladmin import Admin
 from starlette.middleware.sessions import SessionMiddleware
 
-from admin import (
+from app.admin import (
     OrderAdmin,
     OrderItemAdmin,
     OrderReport,
@@ -15,7 +15,7 @@ from admin import (
     UserAdmin,
     ReturnOrderItemAdin,
 )
-from auth import AdminAuth
+from app.auth import AdminAuth
 from db import engine, LocalSession
 
 load_dotenv()
@@ -37,7 +37,7 @@ app = FastAPI()
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.environ["SECRET_KEY"],
-    max_age=int(os.environ["SESSION_COOKIE_AGE"])
+    max_age=int(os.environ["SESSION_COOKIE_AGE"]),
 )
 
 auth_backend = AdminAuth(os.environ["SECRET_KEY"])
@@ -47,10 +47,11 @@ admin = CustomAdmin(
     authentication_backend=auth_backend,
     session_maker=LocalSession,
     title="Blacknight Admin",
+    templates_dir="app/templates",
 )
 admin.admin.mount(
     "/custom-statics",
-    StaticFiles(directory="templates/sqladmin/static"),
+    StaticFiles(directory="app/templates/sqladmin/static"),
     name="custom-statics",
 )
 

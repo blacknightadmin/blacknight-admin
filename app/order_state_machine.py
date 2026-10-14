@@ -1,13 +1,13 @@
 from collections import namedtuple
 
-from queries import (
+from .queries import (
     decrement_products_in_order,
     increment_products_in_order,
     check_stock_count,
     set_delivered_at,
 )
 
-Actions = namedtuple("Callback", ["check", "action"])
+Actions = namedtuple("Actions", ["check", "action"])
 
 ORDER_STATE_MACHINE = {
     "Pending": {
@@ -26,7 +26,7 @@ ORDER_STATE_MACHINE = {
 
 def do_check(from_status, to_status, param, err_msg):
     check_func = ORDER_STATE_MACHINE[from_status][to_status].check
-    if check_func is not None and check_func(param) is False:
+    if check_func is not None and not check_func(param):
         raise Exception(err_msg)
 
 

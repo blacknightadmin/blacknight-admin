@@ -13,7 +13,6 @@ from sqlalchemy import (
     ForeignKey,
     String,
     create_engine,
-    func,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,

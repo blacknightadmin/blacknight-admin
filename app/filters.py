@@ -1,5 +1,5 @@
 from db import Order, OrderStatus, PaymentStatus, Platform, Product, Supplier
-from queries import get_order_choices, get_supplier_choices
+from .queries import get_order_choices, get_supplier_choices
 
 
 class OrderStatusFilter:
