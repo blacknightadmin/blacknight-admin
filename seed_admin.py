@@ -1,0 +1,22 @@
+import os
+
+from dotenv import load_dotenv
+from passlib.hash import bcrypt
+from sqlalchemy import select
+
+from db import LocalSession, User
+
+load_dotenv()
+username = os.environ["ADMIN_USERNAME"]
+hash_password = bcrypt.hash(os.environ["ADMIN_PASSWORD"])
+
+admin_user = User(username=username, hash_password=hash_password)
+
+with LocalSession() as session:
+    with session.begin():
+        user_exists = select(1).where(select(User.id).exists())
+        result = session.execute(user_exists).scalar_one_or_none()
+        if result is None:
+            session.add(admin_user)
+        else:
+            print("An admin user already exists")

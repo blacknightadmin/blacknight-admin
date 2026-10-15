@@ -1,0 +1,45 @@
+{% extends "sqladmin/layout.html" %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">{{ _("Return Order Items") }}</h3>
+        </div>
+        <div class="card-body border-bottom py-3">
+          <div class="table-responsive">
+            <table class="table card-table table-vcenter text-nowrap">
+              <thead>
+                <tr>
+                  <th>{{ _("ID") }}</th>
+                  <th>{{ _("Order") }}</th>
+                  <th>{{ _("Product") }}</th>
+                  <th>{{ _("Count") }}</th>
+                  <th class="w-1"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for order_item in order_items %}
+                <tr>
+                  <td>{{ order_item.id }}</td>
+                  <td>{{ order_item.order }}</td>
+                  <td>{{ order_item.product }}</td>
+                  <td>{{ order_item.count }}</td>
+                  <td class="text-end">
+                    <a href="/admin/return-item/{{ order_item.id }}/" data-bs-toggle="tooltip"
+                       data-bs-placement="top" title="{{ _('Edit') }}">
+                      <span class="me-1"><i class="fa-solid fa-pen-to-square"></i></span>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

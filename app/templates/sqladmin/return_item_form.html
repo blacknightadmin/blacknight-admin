@@ -1,0 +1,54 @@
+{% extends "sqladmin/layout.html" %}
+{% from 'sqladmin/_macros.html' import render_form_fields %}
+
+{% block content %}
+<div class="col-12">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">{{ _("Return Order Item #%(id)s", id=model.id) }}</h3>
+    </div>
+    <div class="card-body border-bottom py-3">
+      <form action="{{ request.url }}" method="POST">
+        <div class="row">
+          {% if error %}
+          <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endif %}
+        </div>
+        <div class="table-responsive mb-3">
+            <table class="table card-table table-vcenter">
+                <thead>
+                    <tr>
+                    <th>{{ _("Order") }}</th>
+                    <th>{{ _("Product") }}</th>
+                    <th>{{ _("Item count") }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td>{{ model.order }}</td>
+                    <td>{{ model.product }}</td>
+                    <td>{{ model.count }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <fieldset class="form-fieldset">
+          {{ render_form_fields(form, form_opts=form_opts, ajax_lookup_url=None) }}
+        </fieldset>
+        <div class="row">
+          <div class="col-md-2">
+            <a href="/admin/return-item/" class="btn">
+              {{ _("Cancel") }}
+            </a>
+          </div>
+          <div class="col-md-6">
+            <div class="btn-group flex-wrap">
+              <input type="submit" name="save" value="{{ _('Save') }}" class="btn btn-primary">
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
