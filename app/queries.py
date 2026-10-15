@@ -4,16 +4,16 @@ from sqlalchemy import cast, select, String
 from db import Order, OrderItem, Product, Supplier
 import db
 
-SessionLocal = db.get_session_factory()
-
 
 def get_supplier_choices():
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         stmt = select(Supplier.id, Supplier.name).order_by(Supplier.name)
         return [tuple(row) for row in session.execute(stmt).all()]
 
 
 def get_product_choices():
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         stmt = select(Product.id, Product.name).where(Product.stock_count > 0)
         result = session.execute(stmt).all()
@@ -21,16 +21,19 @@ def get_product_choices():
 
 
 def get_orderitem_by_id(id):
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         return session.execute(select(OrderItem).filter_by(id=id)).scalar_one_or_none()
 
 
 def get_orderitems_by_order_id(order_id):
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         return session.scalars(select(OrderItem).filter_by(order_id=order_id)).all()
 
 
 def get_returnable_items():
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         cutoff = lambda: datetime.now(timezone.utc) - timedelta(days=14)
         stmt = (
@@ -45,6 +48,7 @@ def get_returnable_items():
 
 
 def get_order_choices():
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         stmt = select(Order.id, "Order #" + cast(Order.id, String)).order_by(
             Order.created_at.desc()
@@ -54,6 +58,7 @@ def get_order_choices():
 
 
 def get_product_count(prod_id: int):
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         return session.execute(
             select(Product.stock_count).filter_by(id=prod_id)
@@ -61,6 +66,7 @@ def get_product_count(prod_id: int):
 
 
 def get_order_status_by_id(order_id: int):
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         return session.scalar(select(Order.status).filter_by(id=order_id))
 
@@ -81,6 +87,7 @@ def set_delivered_at(order: Order):
 
 
 def check_stock_count(order_id: int):
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         order = session.scalar(select(Order).filter_by(id=order_id))
         for order_item in order.order_items:
@@ -91,6 +98,7 @@ def check_stock_count(order_id: int):
 
 # Order.order_items.any(OrderItem.count > Product.stock_count).where(Product.id==OrderItem.product_id)
 def return_order_item(item_id: int, quantity_returned: int):
+    SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         with session.begin():
             order_item = session.scalar(select(OrderItem).filter_by(id=item_id))
