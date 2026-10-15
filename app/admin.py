@@ -137,6 +137,11 @@ class OrderAdmin(ModelView, model=Order):
                     do_action(from_status, to_status, model)
                 return model
 
+    async def on_model_change(self, data, model, is_created, request):
+        if is_created and data["status"] != "Pending":
+            raise Exception("Newly created orders must have Pending status")
+        return await super().on_model_change(data, model, is_created, request)
+
     async def on_model_delete(self, model, request):
         if model.status.name != "Pending" or len(model.order_items) > 0:
             raise Exception("Only pending orders with no items can be deleted!")
