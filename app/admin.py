@@ -138,8 +138,8 @@ class OrderAdmin(ModelView, model=Order):
                 return model
 
     async def on_model_delete(self, model, request):
-        if model.status.name != "Pending":
-            raise Exception("Only pending orders can be deleted!")
+        if model.status.name != "Pending" or len(model.order_items) > 0:
+            raise Exception("Only pending orders with no items can be deleted!")
 
 
 class OrderItemAdmin(ModelView, model=OrderItem):
