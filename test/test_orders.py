@@ -9,12 +9,13 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session
 
 from app.admin import OrderAdmin, OrderItemAdmin
-from db import Base, Product, Order, OrderItem
+from db import Base, Product, Order, OrderItem, PaymentStatus, OrderStatus
 
 from .baseline import create_baseline
 
 load_dotenv()
 DATABASE_URL = os.environ["TEST_DATABASE_URL"]
+UPDATE_ENPOINT = "/admin/order/edit/{pk}"
 
 
 @pytest.fixture(scope="session")
@@ -81,3 +82,222 @@ def client(session_factory, engine, monkeypatch):
     admin.add_view(OrderItemAdmin)
 
     return TestClient(app)
+
+
+@pytest.fixture
+def get_an_order_by_status():
+    def _query(status: OrderStatus):
+        return select(Order).filter_by(status=status).order_by(Order.id).limit(1)
+
+    return _query
+
+
+def test_pending_to_shipped_decrements_product_count(
+    session_factory, client, get_an_order_by_status
+):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Pending)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Shipped.name,
+            "payment_status": order.payment_status.name,
+        }
+        response = client.post(endpoint, data=form_data)
+        assert response.status_code == 200
+
+        session.refresh(order)
+        actual_final_counts = [item.product.stock_count for item in order.order_items]
+        expected_final_counts = [
+            initial - item.count
+            for initial, item in zip(initial_prod_counts, order.order_items)
+        ]
+        assert order.status == OrderStatus.Shipped
+        assert actual_final_counts == expected_final_counts
+
+
+def test_pending_to_delivered_decrements_product_count(
+    session_factory, client, get_an_order_by_status
+):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Pending)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Delivered.name,
+            "payment_status": PaymentStatus.Paid.name,
+        }
+        response = client.post(endpoint, data=form_data)
+        assert response.status_code == 200
+
+        session.refresh(order)
+        actual_final_counts = [item.product.stock_count for item in order.order_items]
+        expected_final_counts = [
+            initial - item.count
+            for initial, item in zip(initial_prod_counts, order.order_items)
+        ]
+        assert order.status == OrderStatus.Delivered
+        assert order.payment_status == PaymentStatus.Paid
+        assert actual_final_counts == expected_final_counts
+
+
+def test_pending_to_cancelled_keeps_product_count_unchanged(
+    session_factory, client, get_an_order_by_status
+):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Pending)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Cancelled.name,
+            "payment_status": order.payment_status.name,
+        }
+        response = client.post(endpoint, data=form_data)
+        assert response.status_code == 200
+
+        session.refresh(order)
+        final_prod_counts = [item.product.stock_count for item in order.order_items]
+        assert order.status == OrderStatus.Cancelled
+        assert final_prod_counts == initial_prod_counts
+
+
+def test_shipped_to_cancelled_increments_product_count(
+    session_factory, client, get_an_order_by_status
+):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Shipped)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Cancelled.name,
+            "payment_status": order.payment_status.name,
+        }
+        response = client.post(endpoint, data=form_data)
+        assert response.status_code == 200
+
+        session.refresh(order)
+        actual_final_counts = [item.product.stock_count for item in order.order_items]
+        expected_final_counts = [
+            initial + item.count
+            for initial, item in zip(initial_prod_counts, order.order_items)
+        ]
+        assert order.status == OrderStatus.Cancelled
+        assert actual_final_counts == expected_final_counts
+
+
+def test_shipped_to_delivered_keeps_product_count_unchanged(
+    session_factory, client, get_an_order_by_status
+):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Shipped)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Delivered.name,
+            "payment_status": order.payment_status.name,
+        }
+        response = client.post(endpoint, data=form_data)
+        assert response.status_code == 200
+
+        session.refresh(order)
+        final_prod_counts = [item.product.stock_count for item in order.order_items]
+        assert order.status == OrderStatus.Delivered
+        assert final_prod_counts == initial_prod_counts
+
+
+def test_shipped_to_pending_invalid(session_factory, client, get_an_order_by_status):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Shipped)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Pending.name,
+            "payment_status": order.payment_status.name,
+        }
+        response = client.post(endpoint, data=form_data)
+        assert response.status_code == 400
+
+
+def test_shipped_to_pending_keeps_prod_counts_unchanged(
+    session_factory, client, get_an_order_by_status
+):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Shipped)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Pending.name,
+            "payment_status": order.payment_status.name,
+        }
+        response = client.post(endpoint, data=form_data)
+        assert response.status_code == 400
+
+        session.refresh(order)
+        final_prod_counts = [item.product.stock_count for item in order.order_items]
+        assert initial_prod_counts == final_prod_counts
+
+
+def test_delivered_is_a_final_state(session_factory, client, get_an_order_by_status):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Delivered)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "payment_status": order.payment_status.name,
+        }
+        states = set(OrderStatus) - {OrderStatus.Delivered}
+        for state in states:
+            form_data["status"] = state.name
+            response = client.post(endpoint, data=form_data)
+
+            session.refresh(order)
+            final_prod_counts = [item.product.stock_count for item in order.order_items]
+
+            assert response.status_code == 400
+            assert initial_prod_counts == final_prod_counts
+
+
+def test_cancelled_is_a_final_state(session_factory, client, get_an_order_by_status):
+    with session_factory() as session:
+        stmt = get_an_order_by_status(OrderStatus.Cancelled)
+        order = session.execute(stmt).scalar_one_or_none()
+        assert order is not None
+        initial_prod_counts = [item.product.stock_count for item in order.order_items]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "payment_status": order.payment_status.name,
+        }
+        states = set(OrderStatus) - {OrderStatus.Cancelled}
+        for state in states:
+            form_data["status"] = state.name
+            response = client.post(endpoint, data=form_data)
+
+            session.refresh(order)
+            final_prod_counts = [item.product.stock_count for item in order.order_items]
+
+            assert response.status_code == 400
+            assert initial_prod_counts == final_prod_counts
