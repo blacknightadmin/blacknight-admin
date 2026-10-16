@@ -1,6 +1,7 @@
 import os
 import pytest
 
+from decimal import Decimal
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -9,7 +10,16 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session
 
 from app.admin import OrderAdmin, OrderItemAdmin
-from db import Base, Product, Order, OrderItem, PaymentStatus, OrderStatus
+from db import (
+    Base,
+    Product,
+    Order,
+    OrderItem,
+    PaymentStatus,
+    Platform,
+    OrderStatus,
+    Supplier,
+)
 
 from .baseline import create_baseline
 
@@ -90,6 +100,26 @@ def get_an_order_by_status():
         return select(Order).filter_by(status=status).order_by(Order.id).limit(1)
 
     return _query
+
+
+@pytest.fixture
+def insufficient_stock_order():
+    supplier = Supplier(name="Apple Stores", platform=Platform.eBay)
+    product1 = Product(
+        name="Iphone 16", price=Decimal(1350000), stock_count=4, supplier=supplier
+    )
+    product2 = Product(
+        name="Mac Book Pro", price=Decimal(1350000), stock_count=1, supplier=supplier
+    )
+
+    item1 = OrderItem(count=10, price=Decimal(1600000), product=product1)
+    item2 = OrderItem(count=1, price=Decimal(1600000), product=product1)
+    order = Order(
+        status=OrderStatus.Pending,
+        payment_status=PaymentStatus.Unpaid,
+        order_items=[item1, item2],
+    )
+    return supplier, [product1, product2], order, [item1, item2]
 
 
 def test_pending_to_shipped_decrements_product_count(
@@ -301,3 +331,59 @@ def test_cancelled_is_a_final_state(session_factory, client, get_an_order_by_sta
 
             assert response.status_code == 400
             assert initial_prod_counts == final_prod_counts
+
+
+def test_pending_to_shipped_fails_on_low_stock_count(
+    session_factory, client, insufficient_stock_order
+):
+    with session_factory() as session:
+        _, products, order, items = insufficient_stock_order
+        assert order.status == OrderStatus.Pending
+
+        session.add_all([*products, order, *items])
+        session.commit()
+        initial_stock_counts = [product.stock_count for product in products]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Shipped.name,
+            "payment_status": PaymentStatus.Paid,
+        }
+        response = client.post(endpoint, data=form_data)
+
+        session.refresh(order)
+        for product in products:
+            session.refresh(product)
+        final_stock_counts = [product.stock_count for product in products]
+
+        assert response.status_code == 400
+        assert order.status == OrderStatus.Pending
+        assert initial_stock_counts == final_stock_counts
+
+
+def test_pending_to_delivered_fails_on_low_stock_count(
+    session_factory, client, insufficient_stock_order
+):
+    with session_factory() as session:
+        _, products, order, items = insufficient_stock_order
+        assert order.status == OrderStatus.Pending
+
+        session.add_all([*products, order, *items])
+        session.commit()
+        initial_stock_counts = [product.stock_count for product in products]
+
+        endpoint = UPDATE_ENPOINT.format(pk=order.id)
+        form_data = {
+            "status": OrderStatus.Delivered.name,
+            "payment_status": PaymentStatus.Paid,
+        }
+        response = client.post(endpoint, data=form_data)
+
+        session.refresh(order)
+        for product in products:
+            session.refresh(product)
+        final_stock_counts = [product.stock_count for product in products]
+
+        assert response.status_code == 400
+        assert order.status == OrderStatus.Pending
+        assert initial_stock_counts == final_stock_counts
