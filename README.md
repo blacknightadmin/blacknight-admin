@@ -41,7 +41,7 @@ normal order flow.
 
 ## Setting up locally
 
-**Prerequisites:** Python 3.12+, Docker, `uv`
+**Prerequisites:** Python 3.12+, Docker, `uv`, `pip`
 
 1. Clone the repo
 ```bash
@@ -51,7 +51,7 @@ normal order flow.
 
 2. Install dependencies
 ```bash
-   uv sync
+   pip install -r requirements.txt
 ```
 
 3. Start Postgres and pgAdmin
@@ -69,24 +69,27 @@ normal order flow.
      `POSTGRES_PASSWORD` from `docker-compose.yml`
 
 6. Create a dedicated app user:
-   - Right-click **Login/Group Roles** → **Create** → **Login/Group Role**
+   - Expand **Servers** dropdown
+   - Right-click **db** → **Login/Group Roles** → **Create** → **Login/Group Role**
    - **General** tab → Name: `blacknight`
    - **Definition** tab → Password: your choice
    - **Privileges** tab → check **Can login?** and **Inherit rights from
      the parent roles?**
    - Save
 
-7. Create the app database:
+8. Create the app database:
+   - Expand **db** dropdown
    - Right-click **Databases** → **Create** → **Database**
    - Name: `blacknight`, Owner: `postgres`
    - Save
 
-8. Grant the app user access:
+10. Grant the app user access:
    - Navigate to **Databases → blacknight → Schemas → public**
    - Right-click → **Properties** → **Security** tab
+   - Click + in the **Privileges** tab
    - Add the `blacknight` role as grantee, check **ALL**, Save
 
-9. Create `.env` in the project root:
+11. Create `.env` in the project root:
 ```env
    DATABASE_URL=postgresql+psycopg2://blacknight:<your_password>@localhost:5433/blacknight
    ADMIN_USERNAME=<your_choice>
