@@ -38,3 +38,64 @@ normal order flow.
 - Filter orders by status and payment status
 - Filter order items by order
 - Search order items by product name
+
+## Setting up locally
+
+**Prerequisites:** Python 3.12+, Docker, `uv`
+
+1. Clone the repo
+```bash
+   git clone https://github.com/blacknightadmin/blacknight-admin.git
+   cd blacknight-admin
+```
+
+2. Install dependencies
+```bash
+   uv sync
+```
+
+3. Start Postgres and pgAdmin
+```bash
+   docker compose up -d
+```
+
+4. Open `127.0.0.1:8080` and log in with the `PGADMIN_DEFAULT_EMAIL` /
+   `PGADMIN_DEFAULT_PASSWORD` values from `docker-compose.yml`.
+
+5. Register the Postgres server in pgAdmin:
+   - Right-click **Servers** → **Register** → **Server**
+   - **General** tab → Name: `db`
+   - **Connection** tab → Host: `db`, Username: `postgres`, Password:
+     `POSTGRES_PASSWORD` from `docker-compose.yml`
+
+6. Create a dedicated app user:
+   - Right-click **Login/Group Roles** → **Create** → **Login/Group Role**
+   - **General** tab → Name: `blacknight`
+   - **Definition** tab → Password: your choice
+   - **Privileges** tab → check **Can login?** and **Inherit rights from
+     the parent roles?**
+   - Save
+
+7. Create the app database:
+   - Right-click **Databases** → **Create** → **Database**
+   - Name: `blacknight`, Owner: `postgres`
+   - Save
+
+8. Grant the app user access:
+   - Navigate to **Databases → blacknight → Schemas → public**
+   - Right-click → **Properties** → **Security** tab
+   - Add the `blacknight` role as grantee, check **ALL**, Save
+
+9. Create `.env` in the project root:
+```env
+   DATABASE_URL=postgresql+psycopg2://blacknight:<your_password>@localhost:5433/blacknight
+   ADMIN_USERNAME=<your_choice>
+   ADMIN_PASSWORD=<your_choice>
+   SECRET_KEY=<your_choice>
+   SESSION_COOKIE_AGE=300  # seconds before re-login is required
+```
+
+10. Run the app
+```bash
+    uv run fastapi dev
+```
