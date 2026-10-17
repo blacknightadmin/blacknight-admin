@@ -13,18 +13,18 @@ REPORT_OPTIONS = {
         "day",
         lambda: date.today() - timedelta(days=14),
         literal_column("INTERVAL '1 day'"),
-        "MON-DD-YYYY",
+        "%b-%d-%Y",
     ),
     "weekly": ReportConf(
         "week",
         lambda: date.today() - timedelta(weeks=4),
         literal_column("INTERVAL '1 week'"),
-        "YYYY-MM-DD",
+        "%Y-%b-%d",
     ),
     "monthly": ReportConf(
         "month",
         lambda: date.today() - timedelta(weeks=12),
         literal_column("INTERVAL '4 weeks'"),
-        "MON-YYYY",
+        "%b-%Y",
     ),
 }
