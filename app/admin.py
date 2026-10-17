@@ -125,15 +125,15 @@ class OrderAdmin(ModelView, model=Order):
                 to_status = data["status"]
                 status_change = from_status != to_status
 
-                if status_change:
-                    # do status change check
+                # status_change allowed ?
+                if status_change and not do_check(from_status, to_status, pk):
                     err_msg = f"Can't move {model} from {from_status} to {to_status}, possibly due to products with low stock count."
-                    do_check(from_status, to_status, pk, err_msg)
+                    raise Exception(err_msg)
 
                 session.execute(update(Order).values(data).where(Order.id == pk))
 
+                # do status change action
                 if status_change:
-                    # do status change action
                     do_action(from_status, to_status, model)
                 return model
 

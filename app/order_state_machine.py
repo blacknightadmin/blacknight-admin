@@ -24,10 +24,10 @@ ORDER_STATE_MACHINE = {
 }
 
 
-def do_check(from_status, to_status, param, err_msg):
+def do_check(from_status, to_status, param):
     check_func = ORDER_STATE_MACHINE[from_status][to_status].check
-    if check_func is not None and not check_func(param):
-        raise Exception(err_msg)
+    if check_func is not None:
+        return check_func(param)
 
 
 def do_action(from_status, to_status, param):
