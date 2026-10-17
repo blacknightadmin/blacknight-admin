@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from db import OrderItem
-from .timebased_report_conf import REPORT_OPTIONS
+from .conf_timeseries import REPORT_OPTIONS
 from . import orders_count_report, revenue_report, status_report
 import db
 
