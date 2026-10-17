@@ -28,6 +28,7 @@ def do_check(from_status, to_status, param):
     check_func = ORDER_STATE_MACHINE[from_status][to_status].check
     if check_func is not None:
         return check_func(param)
+    return True
 
 
 def do_action(from_status, to_status, param):
