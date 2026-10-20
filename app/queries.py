@@ -41,10 +41,15 @@ def get_returnable_items():
             .join(OrderItem.order)
             .where(
                 Order.delivered_at >= cutoff(),
-                OrderItem.quantity_returned <= OrderItem.count,
             )
         )
         return session.scalars(stmt).all()
+
+
+def can_return_item(order_item: OrderItem):
+    cutoff = datetime.now(timezone.utc) - timedelta(days=14)
+    within_cutoff = order_item.order.delivered_at >= cutoff
+    return within_cutoff
 
 
 def get_order_choices():
