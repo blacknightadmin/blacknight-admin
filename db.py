@@ -1,5 +1,6 @@
 import enum
 import os
+import re
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional, List
@@ -23,7 +24,10 @@ from sqlalchemy.orm import (
 )
 
 load_dotenv()
-get_engine = lambda: create_engine(os.environ["DATABASE_URL"], echo=True)
+
+
+def get_engine(): 
+    return create_engine(re.sub(r'^postgresql:', 'postgresql+psycopg2:', os.environ["DATABASE_URL"]), echo=True)
 
 
 def get_session_factory():
