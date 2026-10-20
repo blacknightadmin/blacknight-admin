@@ -96,11 +96,11 @@ def check_stock_count(order_id: int):
         return True
 
 
-# Order.order_items.any(OrderItem.count > Product.stock_count).where(Product.id==OrderItem.product_id)
 def return_order_item(item_id: int, quantity_returned: int):
     SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         with session.begin():
             order_item = session.scalar(select(OrderItem).filter_by(id=item_id))
+            prev_quantity_returned = order_item.quantity_returned
+            order_item.product.stock_count += quantity_returned - prev_quantity_returned
             order_item.quantity_returned = quantity_returned
-            order_item.product.stock_count += quantity_returned
