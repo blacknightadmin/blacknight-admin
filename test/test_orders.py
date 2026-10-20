@@ -1,6 +1,7 @@
 import os
 import pytest
 
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -9,7 +10,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session
 from testcontainers.community.postgres import PostgresContainer
 
-from app.admin import OrderAdmin, OrderItemAdmin
+from app.admin import OrderAdmin, OrderItemAdmin, ReturnOrderItemAdin
 from db import (
     Base,
     Product,
@@ -23,12 +24,15 @@ from db import (
 
 from .baseline import create_baseline
 
+RETURN_ITEM_ENDPOINT = "/admin/return-item/{pk}/"
 UPDATE_ENPOINT = "/admin/order/edit/{pk}"
+
 
 @pytest.fixture(scope="session")
 def postgres_container():
     with PostgresContainer("postgres:16-alpine") as postgres:
         yield postgres
+
 
 @pytest.fixture(scope="session")
 def engine(postgres_container):
@@ -92,6 +96,7 @@ def client(session_factory, engine, monkeypatch):
     )
     admin.add_view(OrderAdmin)
     admin.add_view(OrderItemAdmin)
+    admin.add_view(ReturnOrderItemAdin)
 
     return TestClient(app)
 
@@ -122,6 +127,30 @@ def insufficient_stock_order():
         order_items=[item1, item2],
     )
     return supplier, [product1, product2], order, [item1, item2]
+
+
+@pytest.fixture
+def returnable_order_item():
+    supplier = Supplier(name="Google Stores", platform=Platform.Amazon)
+    product = Product(
+        name="Google Smart Watch",
+        price=Decimal(135000),
+        stock_count=3,
+        supplier=supplier,
+    )
+    item = OrderItem(count=3, price=Decimal(140000), product=product)
+
+    now = datetime.now(timezone.utc)
+    created, delivered = now - timedelta(days=14), now - timedelta(days=10)
+    order = Order(
+        status=OrderStatus.Delivered,
+        payment_status=PaymentStatus.Paid,
+        created_at=created,
+        delivered_at=delivered,
+        order_items=[item],
+    )
+
+    return supplier, product, order, item
 
 
 def test_pending_to_shipped_decrements_product_count(
@@ -390,8 +419,9 @@ def test_pending_to_delivered_fails_on_low_stock_count(
         assert order.status == OrderStatus.Pending
         assert initial_stock_counts == final_stock_counts
 
+
 def test_pending_to_delivered_sets_delivered_at(
-    session_factory, client, get_an_order_by_status      
+    session_factory, client, get_an_order_by_status
 ):
     with session_factory() as session:
         stmt = get_an_order_by_status(OrderStatus.Pending)
@@ -402,7 +432,7 @@ def test_pending_to_delivered_sets_delivered_at(
         endpoint = UPDATE_ENPOINT.format(pk=order.id)
         form_data = {
             "status": OrderStatus.Delivered.name,
-            "payment_status": order.payment_status.name
+            "payment_status": order.payment_status.name,
         }
         response = client.post(endpoint, data=form_data)
         assert response.status_code == 200
@@ -411,8 +441,9 @@ def test_pending_to_delivered_sets_delivered_at(
 
         assert order.delivered_at is not None
 
+
 def test_shipped_to_delivered_sets_delivered_at(
-    session_factory, client, get_an_order_by_status      
+    session_factory, client, get_an_order_by_status
 ):
     with session_factory() as session:
         stmt = get_an_order_by_status(OrderStatus.Shipped)
@@ -423,7 +454,7 @@ def test_shipped_to_delivered_sets_delivered_at(
         endpoint = UPDATE_ENPOINT.format(pk=order.id)
         form_data = {
             "status": OrderStatus.Delivered.name,
-            "payment_status": order.payment_status.name
+            "payment_status": order.payment_status.name,
         }
         response = client.post(endpoint, data=form_data)
         assert response.status_code == 200
@@ -431,3 +462,38 @@ def test_shipped_to_delivered_sets_delivered_at(
         session.refresh(order)
 
         assert order.delivered_at is not None
+
+
+def test_stock_count_computed_correctly_on_repeated_returns(
+    session_factory, client, returnable_order_item
+):
+    with session_factory() as session:
+        supplier, product, order, item = returnable_order_item
+        assert (
+            item.count >= 2
+        ), "Ensure order item count is at least 2 in returnable_order_item"
+
+        session.add_all([supplier, product, order, item])
+        session.commit()
+
+        prev_quantity_returned = item.quantity_returned
+        prev_stock_count = product.stock_count
+
+        endpoint = RETURN_ITEM_ENDPOINT.format(pk=item.id)
+        form_data = [{"quantity_returned": 2}, {"quantity_returned": 1}]
+
+        for data in form_data:
+            response = client.post(endpoint, data=data)
+            assert response.status_code == 200
+
+            session.refresh(item)
+            session.refresh(product)
+
+            expected_stock_count = prev_stock_count + (
+                data["quantity_returned"] - prev_quantity_returned
+            )
+            actual_stock_count = product.stock_count
+            assert expected_stock_count == actual_stock_count
+
+            prev_quantity_returned = data["quantity_returned"]
+            prev_stock_count = actual_stock_count
