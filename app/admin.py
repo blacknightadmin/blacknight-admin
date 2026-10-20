@@ -1,5 +1,5 @@
 from sqlalchemy import func, select, update
-from sqladmin import BaseView, ModelView, expose
+from sqladmin import BaseView, ModelView, expose, Flash
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.responses import RedirectResponse
@@ -21,6 +21,7 @@ from .queries import (
     get_order_status_by_id,
     get_returnable_items,
     return_order_item,
+    can_return_item,
 )
 from .order_state_machine import ORDER_STATE_MACHINE, do_check, do_action
 from .report.orders import report as order_report
@@ -213,6 +214,9 @@ class ReturnOrderItemAdin(BaseView):
 
         if model is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
+        elif not can_return_item(model):
+            Flash.error(request, "Selected item cannot be returned")
+            return RedirectResponse("/return-item/", status.HTTP_400_BAD_REQUEST)
 
         if request.method == "GET":
             return await self.templates.TemplateResponse(

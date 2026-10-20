@@ -34,5 +34,5 @@ def get_report_context(request: Request):
             **dict(order_status_report),
             **dict(order_payment_report),
         }
-        
+
         return context
