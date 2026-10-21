@@ -59,6 +59,9 @@ class SupplierAdmin(ModelView, model=Supplier):
     column_filters = [FilterSupplierByPlatform()]
     column_searchable_list = [Supplier.name]
 
+    can_import = True
+    column_import_list = [Supplier.name, Supplier.platform, Supplier.contact_info]
+
 
 class ProductAdmin(ModelView, model=Product):
     column_list = [
@@ -73,6 +76,14 @@ class ProductAdmin(ModelView, model=Product):
 
     column_filters = [FilterProductBySupplier()]
     column_searchable_list = [Product.name]
+
+    can_import = True
+    column_import_list = [
+        Product.name,
+        Product.price,
+        Product.stock_count,
+        Product.supplier,
+    ]
 
 
 class OrderAdmin(ModelView, model=Order):
