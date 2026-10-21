@@ -27,6 +27,15 @@ from .order_state_machine import ORDER_STATE_MACHINE, do_check, do_action
 from .report.orders import report as order_report
 import db
 
+DATE_FORMAT_STRING = "%Y-%m-%d %H:%M:%S"
+
+
+def date_formatter(model, attr, request):
+    date = getattr(model, attr)
+    if date:
+        return date.strftime(DATE_FORMAT_STRING)
+    return ""
+
 
 class UserAdmin(ModelView, model=User):
     column_list = [User.id, User.username]
@@ -36,7 +45,7 @@ class UserAdmin(ModelView, model=User):
 
 
 class SupplierAdmin(ModelView, model=Supplier):
-    column_list = [Supplier.name, Supplier.platform, Supplier.contact_info]
+    column_list = [Supplier.id, Supplier.name, Supplier.platform, Supplier.contact_info]
     column_details_list = [
         Supplier.name,
         Supplier.platform,
@@ -52,7 +61,13 @@ class SupplierAdmin(ModelView, model=Supplier):
 
 
 class ProductAdmin(ModelView, model=Product):
-    column_list = [Product.name, Product.price, Product.stock_count, Product.supplier]
+    column_list = [
+        Product.id,
+        Product.name,
+        Product.price,
+        Product.stock_count,
+        Product.supplier,
+    ]
     category = "inventory"
     category_icon = "fa-regular fa-rectangle-list"
 
@@ -67,7 +82,16 @@ class OrderAdmin(ModelView, model=Order):
     # can_delete = False
     column_list = ["id", "status", "payment_status", "created_at"]
     column_details_exclude_list = [Order.order_items]
-    column_formatters = {Order.id: lambda m, a: f"Order #{m.id}"}
+
+    column_formatters = {
+        Order.id: lambda m, a: f"Order #{m.id}",
+        Order.created_at: date_formatter,
+    }
+    column_formatters_detail = {
+        Order.created_at: date_formatter,
+        Order.delivered_at: date_formatter,
+    }
+
     form_excluded_columns = [Order.order_items, Order.created_at, Order.delivered_at]
 
     column_filters = [PaymentStatusFilter(), OrderStatusFilter()]
