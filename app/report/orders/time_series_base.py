@@ -69,6 +69,7 @@ class TimeSeriesReportBase:
                 time_series_table.c[option] == aggregate_table.c[option],
                 isouter=True,
             )
+            .order_by(time_series_table.c[option])
         )
         return stmt
 
