@@ -5,45 +5,44 @@ from db import Order, OrderItem, Product, Supplier
 import db
 
 
-def get_supplier_choices():
+def _exec(stmt, scalar=False):
     SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
-        stmt = select(Supplier.id, Supplier.name).order_by(Supplier.name)
-        return [tuple(row) for row in session.execute(stmt).all()]
+        result = session.execute(stmt)
+        if scalar:
+            return result.scalar_one_or_none()
+        else:
+            return result.all()
+
+
+def get_supplier_choices():
+    stmt = select(Supplier.id, Supplier.name).order_by(Supplier.name)
+    return [tuple(row) for row in _exec(stmt)]
 
 
 def get_product_choices():
-    SessionLocal = db.get_session_factory()
-    with SessionLocal() as session:
-        stmt = select(Product.id, Product.name).where(Product.stock_count > 0)
-        result = session.execute(stmt).all()
-        return [tuple(row) for row in result]
+    stmt = select(Product.id, Product.name).where(Product.stock_count > 0)
+    return [tuple(row) for row in _exec(stmt)]
 
 
 def get_orderitem_by_id(id):
-    SessionLocal = db.get_session_factory()
-    with SessionLocal() as session:
-        return session.execute(select(OrderItem).filter_by(id=id)).scalar_one_or_none()
+    return _exec(select(OrderItem).filter_by(id=id), scalar=True)
 
 
 def get_orderitems_by_order_id(order_id):
-    SessionLocal = db.get_session_factory()
-    with SessionLocal() as session:
-        return session.scalars(select(OrderItem).filter_by(order_id=order_id)).all()
+    return _exec(select(OrderItem).filter_by(order_id=order_id))
 
 
 def get_returnable_items():
-    SessionLocal = db.get_session_factory()
-    with SessionLocal() as session:
-        cutoff = lambda: datetime.now(timezone.utc) - timedelta(days=14)
-        stmt = (
-            select(OrderItem)
-            .join(OrderItem.order)
-            .where(
-                Order.delivered_at >= cutoff(),
-            )
+    cutoff = lambda: datetime.now(timezone.utc) - timedelta(days=14)
+    stmt = (
+        select(OrderItem)
+        .join(OrderItem.order)
+        .where(
+            Order.delivered_at >= cutoff(),
         )
-        return session.scalars(stmt).all()
+    )
+    return _exec(stmt)
 
 
 def can_return_item(order_item: OrderItem):
@@ -53,27 +52,18 @@ def can_return_item(order_item: OrderItem):
 
 
 def get_order_choices():
-    SessionLocal = db.get_session_factory()
-    with SessionLocal() as session:
-        stmt = select(Order.id, "Order #" + cast(Order.id, String)).order_by(
-            Order.created_at.desc()
-        )
-        result = session.execute(stmt).all()
-        return [tuple(row) for row in result]
+    stmt = select(Order.id, "Order #" + cast(Order.id, String)).order_by(
+        Order.created_at.desc()
+    )
+    return [tuple(row) for row in _exec(stmt)]
 
 
 def get_product_count(prod_id: int):
-    SessionLocal = db.get_session_factory()
-    with SessionLocal() as session:
-        return session.execute(
-            select(Product.stock_count).filter_by(id=prod_id)
-        ).scalar_one()
+    return _exec(select(Product.stock_count).filter_by(id=prod_id), scalar=True)
 
 
 def get_order_status_by_id(order_id: int):
-    SessionLocal = db.get_session_factory()
-    with SessionLocal() as session:
-        return session.scalar(select(Order.status).filter_by(id=order_id))
+    return _exec(select(Order.status).filter_by(id=order_id), scalar=True)
 
 
 # order management
