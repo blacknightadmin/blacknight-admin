@@ -77,19 +77,19 @@ normal order flow.
      the parent roles?**
    - Save
 
-8. Create the app database:
+7. Create the app database:
    - Expand **db** dropdown
    - Right-click **Databases** → **Create** → **Database**
    - Name: `blacknight`, Owner: `postgres`
    - Save
 
-10. Grant the app user access:
+8. Grant the app user access:
    - Navigate to **Databases → blacknight → Schemas → public**
    - Right-click → **Properties** → **Security** tab
    - Click + in the **Privileges** tab
    - Add the `blacknight` role as grantee, check **ALL**, Save
 
-11. Create `.env` in the project root:
+9. Create `.env` in the project root:
 ```env
    DATABASE_URL=postgresql+psycopg2://blacknight:<your_password>@localhost:5433/blacknight
    ADMIN_USERNAME=<your_choice>
@@ -98,7 +98,16 @@ normal order flow.
    SESSION_COOKIE_AGE=300  # seconds before re-login is required
 ```
 
-10. Run the app
+10. Run migrations
+    ```bash
+    alembic upgrade head
+    ```
+
+11. Run tests *(optional)*
+    ```bash
+    pytest test/
+
+12. Run the app
 ```bash
     uv run fastapi dev
 ```
