@@ -1,7 +1,7 @@
 ## Blacknight Admin
 
 An inventory and order management web application for Blacknight
-Merchandise, a startup based in Surulere, Lagos, specializing in
+Merchandise, a Surulere, Lagos-based bussiness specializing in
 selling digital products within and outside Lagos.
 
 ## About
