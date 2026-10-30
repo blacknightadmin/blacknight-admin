@@ -16,6 +16,7 @@
                   <th>{{ _("Order") }}</th>
                   <th>{{ _("Product") }}</th>
                   <th>{{ _("Count") }}</th>
+                  <th>{{ _("Returned") }}</th>
                   <th class="w-1"></th>
                 </tr>
               </thead>
@@ -26,6 +27,7 @@
                   <td>{{ order_item.order }}</td>
                   <td>{{ order_item.product }}</td>
                   <td>{{ order_item.count }}</td>
+                  <td>{{ order_item.quantity_returned }}</td>
                   <td class="text-end">
                     <a href="/admin/return-item/{{ order_item.id }}/" data-bs-toggle="tooltip"
                        data-bs-placement="top" title="{{ _('Edit') }}">
