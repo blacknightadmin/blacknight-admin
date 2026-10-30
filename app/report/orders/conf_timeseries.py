@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from sqlalchemy import literal_column
 
 ReportConf = namedtuple(
-    "ReportConf",
+    "ReportConf", 
     ["date_trunc_field", "time_series_start", "time_series_step", "date_format_string"],
 )
 
@@ -23,8 +23,8 @@ REPORT_OPTIONS = {
     ),
     "monthly": ReportConf(
         "month",
-        lambda: date.today() - timedelta(weeks=12),
-        literal_column("INTERVAL '4 weeks'"),
+        lambda: date.today() - timedelta(weeks=16),
+        literal_column("INTERVAL '1 month'"),
         "%b-%Y",
     ),
-}
+}   
