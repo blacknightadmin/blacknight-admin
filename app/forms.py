@@ -52,5 +52,5 @@ class ReturnOrderItemForm(Form):
     )
 
     def validate_quantity_returned(self, field):
-        if field.data <= 0:
+        if field.data < 0:
             raise ValidationError("Quantity must be 1 and above.")

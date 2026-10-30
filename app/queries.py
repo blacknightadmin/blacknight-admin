@@ -5,12 +5,14 @@ from db import Order, OrderItem, Product, Supplier
 import db
 
 
-def _exec(stmt, scalar=False):
+def _exec(stmt, scalar=False, scalars_all=False):
     SessionLocal = db.get_session_factory()
     with SessionLocal() as session:
         result = session.execute(stmt)
         if scalar:
             return result.scalar_one_or_none()
+        if scalars_all:
+            return result.scalars().all()
         else:
             return result.all()
 
@@ -41,8 +43,9 @@ def get_returnable_items():
         .where(
             Order.delivered_at >= cutoff(),
         )
+        .order_by(OrderItem.quantity_returned.desc(), Order.created_at.desc())
     )
-    return _exec(stmt)
+    return _exec(stmt, scalars_all=True)
 
 
 def can_return_item(order_item: OrderItem):
