@@ -120,7 +120,7 @@ def insufficient_stock_order():
     )
 
     item1 = OrderItem(count=10, price=Decimal(1600000), product=product1)
-    item2 = OrderItem(count=1, price=Decimal(1600000), product=product1)
+    item2 = OrderItem(count=1, price=Decimal(1600000), product=product2)
     order = Order(
         status=OrderStatus.Pending,
         payment_status=PaymentStatus.Unpaid,
@@ -378,7 +378,7 @@ def test_pending_to_shipped_fails_on_low_stock_count(
         endpoint = UPDATE_ENPOINT.format(pk=order.id)
         form_data = {
             "status": OrderStatus.Shipped.name,
-            "payment_status": PaymentStatus.Paid,
+            "payment_status": PaymentStatus.Paid.name,
         }
         response = client.post(endpoint, data=form_data)
 
@@ -406,7 +406,7 @@ def test_pending_to_delivered_fails_on_low_stock_count(
         endpoint = UPDATE_ENPOINT.format(pk=order.id)
         form_data = {
             "status": OrderStatus.Delivered.name,
-            "payment_status": PaymentStatus.Paid,
+            "payment_status": PaymentStatus.Paid.name,
         }
         response = client.post(endpoint, data=form_data)
 
