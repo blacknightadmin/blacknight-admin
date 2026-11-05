@@ -111,3 +111,7 @@ normal order flow.
 ```bash
     uv run fastapi dev
 ```
+
+## Contribution Guide
+Please open all pull requests against the dev branch. Pull requests targeting main or production 
+will not be considered directly.
