@@ -1,13 +1,14 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqladmin import Admin
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.admin import (
+    InventoryReport,
     OrderAdmin,
     OrderItemAdmin,
     OrderReport,
@@ -63,6 +64,7 @@ admin.add_view(OrderAdmin)
 admin.add_view(OrderItemAdmin)
 admin.add_view(ReturnOrderItemAdin)
 admin.add_view(OrderReport)
+admin.add_view(InventoryReport)
 
 
 @app.get("/")

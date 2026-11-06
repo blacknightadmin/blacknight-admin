@@ -1,0 +1,97 @@
+{% extends "sqladmin_original/layout.html" %}
+
+{% block head_css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('admin:custom-statics', path='css/graph.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="stats-page">
+  <header>
+    <h1>Inventory Statistics</h1>
+  </header>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="label">Low Stock</div>
+      <div class="value">{{ low_stock | length }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Out of Stock</div>
+      <div class="value">{{ out_of_stock | length }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Top Sellers</div>
+      <div class="value">{{ top_selling | length }}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Stock Value</div>
+      <div class="value">{{ "{:,.2f}".format(stock_value or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-title">Low Stock Products</div>
+    <div class="table-responsive">
+      <table class="table card-table table-vcenter">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Stock Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in low_stock %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.stock_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-title">Out of Stock Products</div>
+    <div class="table-responsive">
+      <table class="table card-table table-vcenter">
+        <thead>
+          <tr>
+            <th>Product</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in out_of_stock %}
+          <tr>
+            <td>{{ product.name }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Top Selling Products (last 4 weeks)</div>
+    <div class="table-responsive">
+      <table class="table card-table table-vcenter">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Units Sold</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product, units_sold in top_selling %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ units_sold }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

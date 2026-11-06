@@ -24,6 +24,7 @@ from .queries import (
     can_return_item,
 )
 from .order_state_machine import ORDER_STATE_MACHINE, do_check, do_action
+from .report.inventory import report as inventory_report
 from .report.orders import report as order_report
 import db
 
@@ -303,9 +304,23 @@ class OrderReport(BaseView):
     category_icon = "fa fa-line-chart"
 
     @expose("/reports/order/", methods=["GET"])
-    async def reports(self, request):
+    async def order_report(self, request):
         return await self.templates.TemplateResponse(
             request,
             "sqladmin/order_report.html",
             context=order_report.get_report_context(request),
+        )
+
+
+class InventoryReport(BaseView):
+    name = "Inventory Report"
+    category = "reports"
+    category_icon = "fa fa-line-chart"
+
+    @expose("/reports/inventory/", methods=["GET"])
+    async def inventory_report(self, request):
+        return await self.templates.TemplateResponse(
+            request,
+            "sqladmin/inventory_report.html",
+            context=inventory_report.get_report_context(request),
         )
