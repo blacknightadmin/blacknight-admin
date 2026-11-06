@@ -16,21 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run database migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          alembic upgrade head
-
       - name: Deploy Production to Vercel
         uses: amondnet/vercel-action@v41.1.4
         with: 
