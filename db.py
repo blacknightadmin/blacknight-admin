@@ -26,8 +26,11 @@ from sqlalchemy.orm import (
 load_dotenv()
 
 
-def get_engine(): 
-    return create_engine(re.sub(r'^postgresql:', 'postgresql+psycopg2:', os.environ["DATABASE_URL"]), echo=True)
+def get_engine():
+    return create_engine(
+        re.sub(r"^postgresql:", "postgresql+psycopg2:", os.environ["DATABASE_URL"]),
+        echo=True,
+    )
 
 
 def get_session_factory():
@@ -116,6 +119,7 @@ class Order(Base):
     order_items: Mapped[List["OrderItem"]] = relationship(
         lazy="selectin", back_populates="order"
     )
+    customer_contact: Mapped[Optional[str]]
 
     __table_args__ = (
         CheckConstraint("delivered_at > created_at", "ch_delivered_at_gt_created_at"),

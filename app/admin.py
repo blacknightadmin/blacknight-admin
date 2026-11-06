@@ -91,12 +91,15 @@ class OrderAdmin(ModelView, model=Order):
     edit_template = "sqladmin/custom_order_edit.html"
     create_template = "sqladmin/custom_order_create.html"
     # can_delete = False
-    column_list = ["id", "status", "payment_status", "created_at"]
+    column_list = ["id", "status", "payment_status", "created_at", "customer_contact"]
     column_details_exclude_list = [Order.order_items]
 
     column_formatters = {
         Order.id: lambda m, a: f"Order #{m.id}",
         Order.created_at: date_formatter,
+        Order.customer_contact: lambda m, a: (
+            "" if m.customer_contact is None else m.customer_contact
+        ),
     }
     column_formatters_detail = {
         Order.created_at: date_formatter,
