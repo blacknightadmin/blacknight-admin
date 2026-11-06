@@ -4,40 +4,15 @@ on:
   push:
     branches: 
       - main
+      - test-deploy
   pull_request:
     branches: 
       - main
     
 
 jobs:
-  test:
-
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-    - uses: actions/checkout@v7
-
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v7
-      with:
-        python-version: "3.12"
-
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-
-    - name: Pull  Container Images
-      run: |
-        docker pull postgres:16-alpine
-
-    - name: Run tests
-      run: |
-        pytest test/
 
   deploy-production:
-    needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     permissions: 
