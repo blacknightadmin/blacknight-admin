@@ -4,8 +4,10 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi.errors import RateLimitExceeded
 from sqladmin import Admin
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
 
 from app.admin import (
     InventoryReport,
@@ -18,9 +20,22 @@ from app.admin import (
     ReturnOrderItemAdin,
 )
 from app.auth import AdminAuth
+from login_rate_limit import configure_rate_limited_login_route
 import db
 
 load_dotenv()
+
+
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    context = {"error": f"Rate limit exceeded: {exc.detail}"}
+    response = await admin.templates.TemplateResponse(
+        request, "sqladmin/login.html", context=context, status_code=429
+    )
+
+    request.app.state.limiter._inject_asgi_headers(
+        response.headers, request.state.view_rate_limit
+    )
+    return response
 
 
 class CustomAdmin(Admin):
@@ -43,6 +58,7 @@ app.add_middleware(
 )
 
 auth_backend = AdminAuth(os.environ["SECRET_KEY"])
+
 admin = CustomAdmin(
     app,
     db.get_engine(),
@@ -55,6 +71,14 @@ admin.admin.mount(
     "/custom-statics",
     StaticFiles(directory="app/templates/sqladmin/static"),
     name="custom-statics",
+)
+
+
+limit_value = os.environ.get("RATE_LIMIT_VALUE", "5/minute")
+REDIS_URL = os.environ["REDIS_URL"]
+
+configure_rate_limited_login_route(
+    admin.admin, admin.login, rate_limit_exceeded_handler, limit_value, REDIS_URL
 )
 
 admin.add_view(UserAdmin)
