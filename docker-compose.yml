@@ -18,6 +18,17 @@ services:
       - 8080:80
     volumes:
       - admin-data:/var/lib/pgadmin
+  redis:
+    image: redis:7.4
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    environment: 
+      REDIS_ARGS: --appendonly yes
 volumes:
   db-data:
   admin-data:
+  redis-data:
+    driver: local
