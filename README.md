@@ -49,26 +49,32 @@ normal order flow.
    cd blacknight-admin
 ```
 
-2. Install dependencies
+2. Create a virtual environment and activate it
+```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+```
+
+3. Install dependencies
 ```bash
    pip install -r requirements.txt
 ```
 
-3. Start Postgres and pgAdmin
+4. Start Postgres and pgAdmin
 ```bash
    docker compose up -d
 ```
 
-4. Open `127.0.0.1:8080` and log in with the `PGADMIN_DEFAULT_EMAIL` /
+5. Open `127.0.0.1:8080` and log in with the `PGADMIN_DEFAULT_EMAIL` /
    `PGADMIN_DEFAULT_PASSWORD` values from `docker-compose.yml`.
 
-5. Register the Postgres server in pgAdmin:
+6. Register the Postgres server in pgAdmin:
    - Right-click **Servers** → **Register** → **Server**
    - **General** tab → Name: `db`
    - **Connection** tab → Host: `db`, Username: `postgres`, Password:
      `POSTGRES_PASSWORD` from `docker-compose.yml`
 
-6. Create a dedicated app user:
+7. Create a dedicated app user:
    - Expand **Servers** dropdown
    - Right-click **db** → **Login/Group Roles** → **Create** → **Login/Group Role**
    - **General** tab → Name: `blacknight`
@@ -77,37 +83,44 @@ normal order flow.
      the parent roles?**
    - Save
 
-7. Create the app database:
+8. Create the app database:
    - Expand **db** dropdown
    - Right-click **Databases** → **Create** → **Database**
    - Name: `blacknight`, Owner: `postgres`
    - Save
 
-8. Grant the app user access:
+9. Grant the app user access:
    - Navigate to **Databases → blacknight → Schemas → public**
    - Right-click → **Properties** → **Security** tab
    - Click + in the **Privileges** tab
    - Add the `blacknight` role as grantee, check **ALL**, Save
 
-9. Create `.env` in the project root:
+10. Create `.env` in the project root:
 ```env
    DATABASE_URL=postgresql+psycopg2://blacknight:<your_password>@localhost:5433/blacknight
    ADMIN_USERNAME=<your_choice>
    ADMIN_PASSWORD=<your_choice>
    SECRET_KEY=<your_choice>
    SESSION_COOKIE_AGE=300  # seconds before re-login is required
+   REDIS_URL=redis://localhost:6379
+   RATE_LIMIT_VALUE="5/minute"
 ```
 
-10. Run migrations
+11. Run migrations
     ```bash
     alembic upgrade head
     ```
 
-11. Run tests *(optional)*
+12. Create admin user
+    ```bash
+    python seed_admin.py
+    ```
+
+13. Run tests *(optional)*
     ```bash
     pytest test/
 
-12. Run the app
+14. Run the app
 ```bash
     uv run fastapi dev
 ```
